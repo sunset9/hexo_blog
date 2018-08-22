@@ -8,8 +8,8 @@ subtitle: lazy
 description:
 keywords:
 author: Hae Jin
-language:
-timezone:
+language: ko
+timezone: Asia/Seoul
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
@@ -73,7 +73,7 @@ pagination_dir: page
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: landscape
+theme: hueman
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html

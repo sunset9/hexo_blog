@@ -7,7 +7,9 @@ title: Don't forget
 subtitle: lazy
 description:
 keywords:
+<<<<<<< HEAD
 author: Hae Jin
+>>>>>>> c54cdfd9c1e189730b91316df7870f3270e25da9
 language:
 timezone:
 
@@ -77,6 +79,8 @@ theme: landscape
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
+<<<<<<< HEAD
 deploy:
+>>>>>>> c54cdfd9c1e189730b91316df7870f3270e25da9
   type: git
   repo: https://github.com/sunset9/sunset9.github.io.git

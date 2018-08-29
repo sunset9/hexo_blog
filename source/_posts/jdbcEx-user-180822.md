@@ -1,5 +1,5 @@
 ---
-title: Ojdbc 활용 예제(USER) _0822
+title: DAO를 이용한 Ojdbc 활용 예제(USER) _0822
 date: 2018-08-23 12:26:42
 tags:
 categories:
@@ -7,10 +7,13 @@ categories:
 - JDBC
 ---
 
-JDBC를 이용해 USERTEST테이블에 접근하여 몇 가지 쿼리를 수행한다.
+JDBC를 이용해 USERTEST테이블에 접근하여 몇 가지 쿼리를 수행한다. (UserDao 클래스 참고)
 
 이전 포스팅의 예제에서는 main 함수가 있는 클래스에 DB 연결, SQL 문 수행 등 모든 작업이 한 번에 이루어 졌었다.
 이번에는 __DAO를 이용하여__ 코드를 작성하였다.
+메인 함수 실행부와 DB 연결 및 SQL작성부를 분리시킨다.
+
+\* DAO: 데이터베이스에 수행할 SQL 문을 하나의 메소드의 기능으로 구현하여 모아놓은 객체
 
 [패키지 구성]
  user
@@ -22,9 +25,9 @@ JDBC를 이용해 USERTEST테이블에 접근하여 몇 가지 쿼리를 수행�
 	│   └ User.java
 	└ ex
 	&nbsp;&nbsp;&nbsp;&nbsp;└ UserEx.java
-		   
 
-		 
+
+
 ### UserDao 인터페이스
 ```java
 package user.dao;
@@ -38,16 +41,16 @@ public interface UserDao {
 	//UserTest 테이블 전체 조회
 	//	idx 정렬
 	public List<User> selectAll();
-	
+
 	// idx를 이용한 UserTest 조회
 	//	1명이 조회되도록 한다
 	public User selectByIdx(int idx);
-	
+
 	// User 삽입
 	public void insertUser(User insertUser);
-	
+
 	// idx를 이용한 UserTest 삭제
-	public void deleteByIdx(int idx);	
+	public void deleteByIdx(int idx);
 }
 ```
 
@@ -66,29 +69,29 @@ import java.util.List;
 import user.dto.User;
 
 public class UserDaoImpl implements UserDao{
-	
+
 	// DB 연결 정보
 	private final String DRIVER = "oracle.jdbc.driver.OracleDriver";
 	private final String URL = "jdbc:oracle:thin:@localhost:1521:xe";
 	private final String USERNAME = "scott";
 	private final String PASSWORD = "tiger";
-	
+
 	// DB 연결 객체
 	private Connection conn;
 	// JDBC 객체
 	private PreparedStatement ps;
 	private ResultSet rs;
-	
+
 	public UserDaoImpl() {
 		try {
 			// 드라이버 로드
 			Class.forName(DRIVER);
-			
+
 			conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-			
+
 			// 오토커밋 설정(기본값 : true)
 			// 오토커밋 시 중간에 에러나서 프로그램종료되면 자동커밋, 데이터 깨질 수 있음
-			conn.setAutoCommit(false); 
+			conn.setAutoCommit(false);
 			// 이러면 commit, rollback 관리를 명시적으로 해줘야함
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
@@ -96,27 +99,27 @@ public class UserDaoImpl implements UserDao{
 			e.printStackTrace();
 		}
 	}
-	
-	
+
+
 	@Override
 	public List<User> selectAll() {
 		String sql = "SELECT * FROM userTest ORDER BY idx";
 		List<User> userList = new ArrayList<>();
-		
+
 		try {
 			ps = conn.prepareStatement(sql);
 			rs = ps.executeQuery();
-			
+
 			while(rs.next()) {
 				User user = new User();
-				
+
 				user.setIdx(rs.getInt("idx"));
 				user.setUserid(rs.getString("userid"));
 				user.setName(rs.getString("name"));
-				
+
 				userList.add(user);
 			}
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -134,13 +137,13 @@ public class UserDaoImpl implements UserDao{
 	public User selectByIdx(int idx) {
 		String sql = "SELECT * FROM userTest WHERE idx = ?";
 		User user = null;
-		
+
 		try {
 			ps = conn.prepareStatement(sql);
-			
+
 			ps.setInt(1, idx);
 			rs = ps.executeQuery();
-			
+
 			user = new User();
 			if(rs.next()) {
 				user.setIdx(rs.getInt("idx"));
@@ -150,7 +153,7 @@ public class UserDaoImpl implements UserDao{
 				System.out.println("** 조회: 해당 IDX에 해당하는 유저가 없습니다.");
 				return null;
 			}
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -170,7 +173,7 @@ public class UserDaoImpl implements UserDao{
 		String userName = insertUser.getName();
 		String sql = "INSERT INTO userTest(idx, userid, name) VALUES (userTest_SQ.nextval,?,?)";
 		String sql2 = "SELECT COUNT(*) FROM userTest WHERE userid = upper(?)";
-		
+
 		try {
 			// 중복 아이디 체크
 			PreparedStatement ps2 = conn.prepareStatement(sql2);
@@ -185,17 +188,17 @@ public class UserDaoImpl implements UserDao{
 				ps = conn.prepareStatement(sql);
 				ps.setString(1, userId);
 				ps.setString(2, userName);
-				
+
 				ps.executeUpdate();
 			}
-			
+
 			conn.commit(); // 명시적으로 커밋하기
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
-			
+
 			try {
-				conn.rollback(); // 예외 발생 시 롤백 
+				conn.rollback(); // 예외 발생 시 롤백
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
@@ -212,26 +215,26 @@ public class UserDaoImpl implements UserDao{
 	@Override
 	public void deleteByIdx(int idx) {
 		String sql = "DELETE userTest WHERE idx = ?";
-		
+
 		try {
 			ps = conn.prepareStatement(sql);
 			ps.setInt(1, idx);
-			
+
 			if( ps.executeUpdate() == 0) {
 				System.out.println("** 삭제: 해당 IDX에 해당하는 유저가 없습니다.");
 			}
-			
+
 			conn.commit(); // 명시적으로 커밋하기
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
-			
+
 			try {
-				conn.rollback(); // 예외 발생 시 롤백 
+				conn.rollback(); // 예외 발생 시 롤백
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
-		} finally { 
+		} finally {
 			try {
 				ps.close();
 			} catch (SQLException e) {
@@ -242,4 +245,4 @@ public class UserDaoImpl implements UserDao{
 }
 ```
 
-** 메소드 안의 catch문에서 자원 해제할 때 conn.close() 는 하면 안된다. 연결 객체를 해제해버리면 다른 메소드에서 접근 할 수 없다.
+** 메소드 안의 catch문에서 자원 해제할 때 conn은 close()하면 안된다. 연결 객체를 해제해버리면 다른 메소드에서 접근 할 수 없다.
